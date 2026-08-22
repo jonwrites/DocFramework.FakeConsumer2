@@ -26,7 +26,7 @@ public class LiveMessage : IMessageSender
     /// <param name="message">The message to send.</param>
     public void Send(string message)
     {
-        string transformedMessage = _textTransformer.Transform(message);
+        string transformedMessage = _textTransformer.Emphasise(message);
 
         // This is only a demonstration implementation.
         Console.WriteLine($"Live: {transformedMessage}");
