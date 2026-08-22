@@ -1,0 +1,63 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      DOC_VERSION: v1.0.0
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Configure GitHub Packages
+        run: |
+          dotnet nuget add source \
+            "https://nuget.pkg.github.com/jonwrites/index.json" \
+            --name github \
+            --username jonwrites \
+            --password "${{ secrets.NUGET_PAT }}" \
+            --store-password-in-clear-text
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Prepare documentation input
+        shell: bash
+        run: |
+          mkdir -p documentation-input/artifacts
+          mkdir -p documentation-input/docs
+
+          cp src/JLib.Messaging/bin/Release/net9.0/JLib.Messaging.dll documentation-input/artifacts/
+
+          cp src/JLib.Messaging/bin/Release/net9.0/JLib.Messaging.xml documentation-input/artifacts/
+
+          cp docs/*.md documentation-input/docs/
+          cp docs/toc.yml documentation-input/docs/
+          cp docs/manifest.yml documentation-input/manifest.yml
+
+      - name: Upload documentation input
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-input
+          path: documentation-input/
